@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>🐶 MILO - Asistente IA</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    body {
+      background-color: #0b0f19;
+    }
+    .chat-container {
+      background-color: #151c2c;
+    }
+    /* Personalización de Scrollbar */
+    ::-webkit-scrollbar {
+      width: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #0b0f19;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #1e293b;
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #334155;
+    }
+
+    /* Animaciones para el indicador de escritura */
+    @keyframes typingPulse {
+      0%, 100% { opacity: 0.3; transform: scale(0.8); }
+      50% { opacity: 1; transform: scale(1.1); }
+    }
+    .dot-1 { animation: typingPulse 1.4s infinite 0s; }
+    .dot-2 { animation: typingPulse 1.4s infinite 0.2s; }
+    .dot-3 { animation: typingPulse 1.4s infinite 0.4s; }
+
+    /* Formato para mantener saltos de línea y estructura */
+    .chat-bubble {
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+  </style>
+</head>
+<body class="text-slate-100 min-h-screen flex flex-col font-sans antialiased">
+
+  <!-- Header Superior -->
+  <header class="border-b border-slate-800/80 bg-[#151c2c]/90 backdrop-blur-md sticky top-0 z-10 px-4 py-3">
+    <div class="max-w-4xl mx-auto flex flex-wrap justify-between items-center gap-3">
+      
+      <!-- Marca / Título MILO -->
+      <div class="flex items-center space-x-3">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-500 flex items-center justify-center shadow-lg shadow-blue-500/20">
+          <span class="text-xl">🐶</span>
+        </div>
+        <div>
+          <h1 class="font-bold text-xl text-slate-100 flex items-center gap-2">
+            🐶 MILO
+            <span class="text-[10px] bg-blue-950 text-blue-400 border border-blue-800/60 px-2 py-0.5 rounded-full font-medium">
+              gemini-3-flash-preview
+            </span>
+          </h1>
+          <p class="text-xs text-slate-400">Tu asistente inteligente rápido y eficiente</p>
+        </div>
+      </div>
+
+      <!-- Controles y Configuración de API Key -->
+      <div class="flex items-center space-x-2">
+        <button onclick="openConfigModal()" title="Configurar API Key" class="px-3 py-1.5 text-xs text-blue-400 bg-blue-950/60 hover:bg-blue-900/80 rounded-xl transition-colors flex items-center gap-1.5 border border-blue-800/60">
+          <i class="fa-solid fa-key"></i>
+          <span id="keyStatusText">API Key</span>
+        </button>
+
+        <button onclick="clearChat()" title="Limpiar conversación" class="px-3 py-1.5 text-xs text-slate-400 hover:text-slate-200 bg-slate-800/80 hover:bg-slate-700 rounded-xl transition-colors flex items-center gap-1.5 border border-slate-700/60">
+          <i class="fa-solid fa-trash-can"></i>
+          <span class="hidden sm:inline">Limpiar</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Banner de Estado de Clave -->
+  <div id="infoBanner" class="bg-blue-950/40 border-b border-blue-900/40 text-blue-300 px-4 py-2 text-xs text-center flex justify-center items-center gap-2">
+    <i class="fa-solid fa-circle-info text-blue-400"></i>
+    <span id="bannerText">Proporciona tu clave de API de Google AI Studio para chatear con MILO.</span>
+  </div>
+
+  <!-- Contenedor Principal del Chat -->
+  <main class="flex-1 max-w-4xl w-full mx-auto p-4 flex flex-col justify-between overflow-hidden">
+    
+    <!-- Historial de Mensajes -->
+    <div id="chatHistory" class="flex-1 overflow-y-auto space-y-4 pr-1 mb-4 flex flex-col">
+      <!-- Mensaje Bienvenida -->
+      <div class="flex gap-3 max-w-[85%] self-start">
+        <div class="w-8 h-8 rounded-xl bg-blue-600/20 border border-blue-500/30 flex items-center justify-center text-blue-400 shrink-0 mt-1">
+          <span>🐶</span>
+        </div>
+        <div class="chat-container border border-slate-800/80 rounded-2xl rounded-tl-none p-4 text-slate-200 text-sm shadow-md chat-bubble">
+¡Hola! Soy **MILO** 🐶. ¿En qué te puedo ayudar hoy? 
+
+Ingresa tu **API Key de Google AI Studio** en el botón superior para comenzar a chatear directamente con el modelo Gemini.
+        </div>
+      </div>
+    </div>
+
+    <!-- Indicador de Carga / Typing Indicator -->
+    <div id="loadingIndicator" class="hidden flex items-center gap-3 mb-4 max-w-[85%] self-start">
+      <div class="w-8 h-8 rounded-xl bg-blue-600/20 border border-blue-500/30 flex items-center justify-center text-blue-400 shrink-0">
+        <span>🐶</span>
+      </div>
+      <div class="chat-container border border-slate-800/80 rounded-2xl rounded-tl-none px-4 py-3 flex items-center gap-2 text-slate-400 text-sm">
+        <span>MILO está pensando</span>
+        <div class="flex gap-1 items-center ml-1">
+          <div class="w-2 h-2 rounded-full bg-blue-400 dot-1"></div>
+          <div class="w-2 h-2 rounded-full bg-blue-400 dot-2"></div>
+          <div class="w-2 h-2 rounded-full bg-blue-400 dot-3"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Panel de Entrada de Mensaje -->
+    <div class="chat-container border border-slate-800/80 rounded-2xl p-2 shadow-2xl focus-within:border-blue-500/50 transition-colors">
+      <form id="chatForm" onsubmit="handleSend(event)" class="flex items-end gap-2">
+        <textarea 
+          id="userInput" 
+          rows="1" 
+          placeholder="Escribe un mensaje para MILO... (Enter para enviar)"
+          class="flex-1 bg-transparent text-slate-100 placeholder-slate-500 resize-none outline-none p-2 max-h-32 text-sm leading-relaxed"
+          onkeydown="handleKeyDown(event)"
+          oninput="autoResizeTextarea(this)"></textarea>
+        
+        <button 
+          type="submit" 
+          id="sendBtn"
+          class="bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white w-10 h-10 rounded-xl flex items-center justify-center transition-all shrink-0 shadow-lg shadow-blue-600/20">
+          <i class="fa-solid fa-paper-plane text-sm"></i>
+        </button>
+      </form>
+    </div>
+
+  </main>
+
+  <!-- Modal para API Key -->
+  <div id="configModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+    <div class="chat-container border border-slate-800/80 rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4">
+      <div class="flex justify-between items-center border-b border-slate-800 pb-3">
+        <h3 class="font-bold text-slate-100 flex items-center gap-2">
+          <i class="fa-solid fa-key text-blue-400"></i>
+          Configurar Google AI Studio Key
+        </h3>
+        <button onclick="closeConfigModal()" class="text-slate-400 hover:text-slate-200">
+          <i class="fa-solid fa-xmark text-lg"></i>
+        </button>
+      </div>
+
+      <p class="text-xs text-slate-400 leading-relaxed">
+        Ingresa tu clave de API de Google AI Studio (`AIzaSy...`). Se guardará localmente en tu navegador (`localStorage`) de manera segura.
+      </p>
+
+      <div>
+        <label for="apiKeyInput" class="block text-xs font-semibold text-slate-300 mb-2">Google Gemini API Key</label>
+        <div class="relative">
+          <input 
+            type="password" 
+            id="apiKeyInput" 
+            placeholder="AIzaSy..." 
+            class="w-full bg-[#0b0f19] border border-slate-800 rounded-xl px-3 py-2.5 text-sm text-slate-100 focus:outline-none focus:border-blue-500 pr-10">
+          <button 
+            type="button" 
+            onclick="toggleKeyVisibility()" 
+            class="absolute right-3 top-3 text-slate-500 hover:text-slate-300 text-xs">
+            <i id="eyeIcon" class="fa-solid fa-eye"></i>
+          </button>
+        </div>
+      </div>
+
+      <div class="flex justify-end gap-2 pt-2">
+        <button 
+          onclick="closeConfigModal()" 
+          class="px-4 py-2 text-xs font-medium text-slate-400 hover:text-slate-200 bg-slate-800/80 rounded-xl transition-colors">
+          Cancelar
+        </button>
+        <button 
+          onclick="saveApiKey()" 
+          class="px-4 py-2 text-xs font-medium text-white bg-blue-600 hover:bg-blue-500 rounded-xl transition-colors shadow-lg shadow-blue-600/20">
+          Guardar Clave
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Variables de Estado
+    let storedApiKey = localStorage.getItem('milo_api_key') || '';
+
+    // Elementos DOM
+    const chatHistory = document.getElementById('chatHistory');
+    const userInput = document.getElementById('userInput');
+    const loadingIndicator = document.getElementById('loadingIndicator');
+    const infoBanner = document.getElementById('infoBanner');
+    const bannerText = document.getElementById('bannerText');
+    const configModal = document.getElementById('configModal');
+    const apiKeyInput = document.getElementById('apiKeyInput');
+    const sendBtn = document.getElementById('sendBtn');
+
+    // Inicialización del estado
+    function updateKeyStatusUI() {
+      if (storedApiKey) {
+        bannerText.innerHTML = 'MILO está listo y conectado con el modelo <strong>gemini-3-flash-preview</strong>.';
+        infoBanner.className = "bg-emerald-950/40 border-b border-emerald-900/40 text-emerald-300 px-4 py-2 text-xs text-center flex justify-center items-center gap-2";
+      } else {
+        bannerText.innerHTML = 'Por favor, <button onclick="openConfigModal()" class="underline font-bold ml-1">ingresa tu API Key de Gemini</button> para comenzar a usar a MILO.';
+        infoBanner.className = "bg-blue-950/40 border-b border-blue-900/40 text-blue-300 px-4 py-2 text-xs text-center flex justify-center items-center gap-2";
+      }
+    }
+
+    // Modal para API Key
+    function openConfigModal() { 
+      if (storedApiKey) apiKeyInput.value = storedApiKey;
+      configModal.classList.remove('hidden'); 
+    }
+    function closeConfigModal() { configModal.classList.add('hidden'); }
+
+    function toggleKeyVisibility() {
+      const eyeIcon = document.getElementById('eyeIcon');
+      if (apiKeyInput.type === 'password') {
+        apiKeyInput.type = 'text';
+        eyeIcon.classList.replace('fa-eye', 'fa-eye-slash');
+      } else {
+        apiKeyInput.type = 'password';
+        eyeIcon.classList.replace('fa-eye-slash', 'fa-eye');
+      }
+    }
+
+    function saveApiKey() {
+      const val = apiKeyInput.value.trim();
+      if (!val) {
+        alert("Por favor ingresa una clave de API válida.");
+        return;
+      }
+      storedApiKey = val;
+      localStorage.setItem('milo_api_key', storedApiKey);
+      updateKeyStatusUI();
+      closeConfigModal();
+    }
+
+    // Limpiar Chat
+    function clearChat() {
+      chatHistory.innerHTML = `
+        <div class="flex gap-3 max-w-[85%] self-start">
+          <div class="w-8 h-8 rounded-xl bg-blue-600/20 border border-blue-500/30 flex items-center justify-center text-blue-400 shrink-0 mt-1">
+            <span>🐶</span>
+          </div>
+          <div class="chat-container border border-slate-800/80 rounded-2xl rounded-tl-none p-4 text-slate-200 text-sm shadow-md chat-bubble">
+            Conversación reiniciada. ¿Qué quieres preguntarle a MILO?
+          </div>
+        </div>
+      `;
+    }
+
+    // Autoajuste de Textarea
+    function autoResizeTextarea(element) {
+      element.style.height = 'auto';
+      element.style.height = (element.scrollHeight) + 'px';
+    }
+
+    function handleKeyDown(e) {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        handleSend(e);
+      }
+    }
+
+    // Enviar Mensaje a Gemini API
+    async function handleSend(e) {
+      if (e) e.preventDefault();
+      const text = userInput.value.trim();
+      if (!text) return;
+
+      if (!storedApiKey) {
+        openConfigModal();
+        return;
+      }
+
+      appendUserMessage(text);
+      userInput.value = '';
+      userInput.style.height = 'auto';
+
+      setLoadingState(true);
+
+      try {
+        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${storedApiKey}`;
+        const response = await fetch(apiUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contents: [{ parts: [{ text: text }] }]
+          })
+        });
+
+        const data = await response.json();
+
+        if (response.ok && data.candidates && data.candidates[0]?.content?.parts?.[0]?.text) {
+          appendAssistantMessage(data.candidates[0].content.parts[0].text);
+        } else {
+          const errDetail = data.error ? data.error.message : 'Respuesta no válida del servidor.';
+          appendErrorMessage(`Error: ${errDetail}`);
+        }
+      } catch (err) {
+        appendErrorMessage(`Error de conexión: ${err.message}. Revisa tu conexión a internet o tu clave de API.`);
+      } finally {
+        setLoadingState(false);
+      }
+    }
+
+    function appendUserMessage(text) {
+      const msgDiv = document.createElement('div');
+      msgDiv.className = 'flex gap-3 max-w-[85%] self-end flex-row-reverse';
+      msgDiv.innerHTML = `
+        <div class="w-8 h-8 rounded-xl bg-blue-600 flex items-center justify-center text-white shrink-0 mt-1 shadow-md shadow-blue-600/20">
+          <i class="fa-solid fa-user text-xs"></i>
+        </div>
+        <div class="bg-blue-600 text-white rounded-2xl rounded-tr-none p-4 text-sm shadow-md chat-bubble">
+          ${escapeHtml(text)}
+        </div>
+      `;
+      chatHistory.appendChild(msgDiv);
+      scrollToBottom();
+    }
+
+    function appendAssistantMessage(text) {
+      const msgDiv = document.createElement('div');
+      msgDiv.className = 'flex gap-3 max-w-[85%] self-start';
+      msgDiv.innerHTML = `
+        <div class="w-8 h-8 rounded-xl bg-blue-600/20 border border-blue-500/30 flex items-center justify-center text-blue-400 shrink-0 mt-1">
+          <span>🐶</span>
+        </div>
+        <div class="chat-container border border-slate-800/80 rounded-2xl rounded-tl-none p-4 text-slate-200 text-sm shadow-md chat-bubble">
+          ${escapeHtml(text)}
+        </div>
+      `;
+      chatHistory.appendChild(msgDiv);
+      scrollToBottom();
+    }
+
+    function appendErrorMessage(errText) {
+      const msgDiv = document.createElement('div');
+      msgDiv.className = 'flex gap-3 max-w-[85%] self-start';
+      msgDiv.innerHTML = `
+        <div class="w-8 h-8 rounded-xl bg-rose-950/60 border border-rose-800/50 flex items-center justify-center text-rose-400 shrink-0 mt-1">
+          <i class="fa-solid fa-circle-exclamation text-sm"></i>
+        </div>
+        <div class="bg-rose-950/30 border border-rose-900/50 rounded-2xl rounded-tl-none p-4 text-rose-200 text-sm shadow-md chat-bubble">
+          <strong class="block text-rose-400 font-semibold mb-1">Aviso de Error:</strong>
+          ${escapeHtml(errText)}
+        </div>
+      `;
+      chatHistory.appendChild(msgDiv);
+      scrollToBottom();
+    }
+
+    function setLoadingState(isLoading) {
+      if (isLoading) {
+        loadingIndicator.classList.remove('hidden');
+        sendBtn.disabled = true;
+      } else {
+        loadingIndicator.classList.add('hidden');
+        sendBtn.disabled = false;
+      }
+      scrollToBottom();
+    }
+
+    function scrollToBottom() {
+      chatHistory.scrollTop = chatHistory.scrollHeight;
+    }
+
+    function escapeHtml(text) {
+      return text
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+    }
+
+    // Inicialización al cargar
+    updateKeyStatusUI();
+  </script>
+</body>
+</html>
