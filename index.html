@@ -1,0 +1,803 @@
+<!DOCTYPE html>
+<html lang="es" class="dark h-full bg-[#0b0f19] text-slate-100">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MILO - Asistente Personal & Creativo IA</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- Marked.js for Markdown Rendering -->
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <!-- Google Fonts: Inter -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+          },
+          colors: {
+            milo: {
+              bg: '#0b0f19',
+              card: '#131927',
+              border: '#1f293d',
+              accent: '#3b82f6',
+              purple: '#8b5cf6',
+              gold: '#f59e0b',
+              green: '#10b981'
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #0b0f19;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #1f293d;
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #374151;
+    }
+    .markdown-content p { margin-bottom: 0.75rem; line-height: 1.6; }
+    .markdown-content ul { list-style-type: disc; padding-left: 1.25rem; margin-bottom: 0.75rem; }
+    .markdown-content ol { list-style-type: decimal; padding-left: 1.25rem; margin-bottom: 0.75rem; }
+    .markdown-content code { background-color: #1e293b; padding: 0.15rem 0.35rem; border-radius: 0.25rem; font-size: 0.875em; color: #60a5fa; }
+    .markdown-content pre { background-color: #0f172a; padding: 0.75rem; border-radius: 0.5rem; overflow-x: auto; margin-bottom: 0.75rem; border: 1px solid #1e293b; }
+    .markdown-content pre code { background: none; padding: 0; color: #f8fafc; }
+  </style>
+</head>
+<body class="h-full flex flex-col font-sans select-none overflow-hidden bg-[#0b0f19] text-slate-200">
+
+  <!-- ==================== DESKTOP TITLE BAR ==================== -->
+  <header class="h-10 bg-[#080b12] border-b border-milo-border flex items-center justify-between px-3 z-50 shrink-0">
+    <div class="flex items-center space-x-2">
+      <!-- App Icon & Title -->
+      <span class="text-xl leading-none">🤖</span>
+      <span class="font-bold text-sm tracking-wide bg-gradient-to-r from-blue-400 via-indigo-300 to-purple-400 bg-clip-text text-transparent">MILO</span>
+      <span id="badge-titlebar" class="text-[10px] px-2 py-0.5 rounded-full font-semibold bg-blue-500/20 text-blue-300 border border-blue-500/40">EDICIÓN PRODUCTIVIDAD & CREATIVIDAD</span>
+    </div>
+
+    <div class="text-xs text-slate-400 font-medium hidden sm:flex items-center gap-2">
+      <span>Asistente Virtual, Programación & Redacción IA</span>
+      <span class="text-slate-600">•</span>
+      <!-- Premium Upgrade Banner -->
+      <button onclick="openPaywallModal()" class="text-amber-400 hover:text-amber-300 flex items-center gap-1 bg-amber-500/10 hover:bg-amber-500/20 px-2 py-0.5 rounded border border-amber-500/30 transition-colors">
+        <i class="fa-solid fa-crown text-xs"></i>
+        <span>Obtener Premium</span>
+      </button>
+    </div>
+
+    <!-- Window Controls -->
+    <div class="flex items-center space-x-2">
+      <button onclick="saveApiKeyModal()" title="Configurar API Key de Gemini" class="text-xs px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 transition-colors flex items-center gap-1">
+        <i class="fa-solid fa-key text-amber-400"></i>
+        <span class="hidden sm:inline">API Key</span>
+      </button>
+      <div class="h-4 w-[1px] bg-slate-800 mx-1"></div>
+      <button class="w-3 h-3 rounded-full bg-amber-500 hover:opacity-80 transition-opacity" title="Minimizar"></button>
+      <button class="w-3 h-3 rounded-full bg-emerald-500 hover:opacity-80 transition-opacity" title="Maximizar"></button>
+      <button class="w-3 h-3 rounded-full bg-rose-500 hover:opacity-80 transition-opacity" title="Cerrar"></button>
+    </div>
+  </header>
+
+  <!-- ==================== MAIN WORKSPACE ==================== -->
+  <div class="flex-1 flex overflow-hidden relative">
+
+    <!-- SIDEBAR: Chat History & General Tools -->
+    <aside id="sidebar" class="w-64 bg-milo-card border-r border-milo-border flex flex-col shrink-0 transition-all duration-300 z-30">
+      <!-- Sidebar Header -->
+      <div class="p-3 border-b border-milo-border flex flex-col gap-2">
+        <button onclick="createNewChat()" class="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white text-sm font-medium py-2 px-3 rounded-lg shadow-lg shadow-blue-500/10 transition">
+          <i class="fa-solid fa-plus"></i>
+          <span>Nuevo Chat</span>
+        </button>
+      </div>
+
+      <!-- Quick Productivity Shortcuts -->
+      <div class="p-3 border-b border-milo-border bg-[#0d121f]/50">
+        <span class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block mb-2">⚡ Herramientas Rápidas</span>
+        <div class="space-y-1.5">
+          <button onclick="quickPrompt('Ayúdame a resumir un texto largo y extraer los puntos clave en listas viñeteadas.')" class="w-full text-left p-1.5 rounded bg-slate-800/60 hover:bg-slate-700/60 text-xs text-blue-300 flex items-center gap-2">
+            <i class="fa-solid fa-align-left text-blue-400"></i> Resumir Textos
+          </button>
+          <button onclick="quickPrompt('Actúa como un experto programador. Explícame un concepto o ayúdame a corregir un bloque de código.')" class="w-full text-left p-1.5 rounded bg-slate-800/60 hover:bg-slate-700/60 text-xs text-purple-300 flex items-center gap-2">
+            <i class="fa-solid fa-code text-purple-400"></i> Asistente de Código
+          </button>
+          <button onclick="quickPrompt('Crea una rutina diaria equilibrada para organizar mis hábitos, estudios y tiempo libre de forma eficiente.')" class="w-full text-left p-1.5 rounded bg-slate-800/60 hover:bg-slate-700/60 text-xs text-emerald-300 flex items-center gap-2">
+            <i class="fa-solid fa-calendar-check text-emerald-400"></i> Organizar Rutina
+          </button>
+        </div>
+      </div>
+
+      <!-- Chat History List -->
+      <div id="chat-history-list" class="flex-1 overflow-y-auto p-2 space-y-1">
+        <!-- Dynamic History Items inserted here -->
+      </div>
+
+      <!-- General Status & Quota Box -->
+      <div class="p-3 border-t border-milo-border bg-[#0d121f]">
+        <div class="flex items-center justify-between text-xs mb-1">
+          <span class="text-slate-400 font-medium">Cuota Diaria</span>
+          <span id="quota-counter" class="font-bold text-blue-400">0 / 20</span>
+        </div>
+        <!-- Progress Bar -->
+        <div class="w-full bg-slate-800 h-1.5 rounded-full overflow-hidden mb-2">
+          <div id="quota-progress-bar" class="bg-blue-500 h-full w-0 transition-all duration-300"></div>
+        </div>
+        <button onclick="openPaywallModal()" class="w-full py-1.5 text-xs font-semibold rounded bg-amber-500/10 text-amber-300 border border-amber-500/30 hover:bg-amber-500/20 transition flex items-center justify-center gap-1.5">
+          <i class="fa-solid fa-bolt text-amber-400"></i> Desbloquear Ilimitado
+        </button>
+      </div>
+    </aside>
+
+    <!-- MAIN CHAT VIEW -->
+    <main class="flex-1 flex flex-col bg-[#0b0f19] relative min-w-0">
+      
+      <!-- Top Chat Title Header -->
+      <div class="h-12 border-b border-milo-border flex items-center justify-between px-4 bg-[#0d121f]/80 backdrop-blur shrink-0">
+        <div class="flex items-center gap-3">
+          <button id="toggle-sidebar" onclick="toggleSidebar()" class="text-slate-400 hover:text-white md:hidden">
+            <i class="fa-solid fa-bars"></i>
+          </button>
+          <div class="font-semibold text-slate-200 text-sm truncate" id="current-chat-title">
+            Nueva Conversación
+          </div>
+        </div>
+        <div class="flex items-center gap-2">
+          <button onclick="clearCurrentChat()" class="text-xs text-slate-400 hover:text-rose-400 px-2 py-1 rounded transition">
+            <i class="fa-solid fa-trash-can mr-1"></i> Borrar
+          </button>
+        </div>
+      </div>
+
+      <!-- Messages Scroll Container -->
+      <div id="messages-container" class="flex-1 overflow-y-auto p-4 md:p-6 space-y-4">
+        <!-- Initial Welcome Screen -->
+        <div id="welcome-screen" class="h-full flex flex-col items-center justify-center text-center max-w-xl mx-auto p-6 space-y-4">
+          <div class="w-16 h-16 rounded-2xl bg-gradient-to-tr from-blue-500 to-indigo-600 flex items-center justify-center text-3xl shadow-xl shadow-blue-500/20">
+            🤖
+          </div>
+          <h2 class="text-2xl font-bold text-white">¿En qué te puedo ayudar hoy?</h2>
+          <p class="text-slate-400 text-sm">
+            Soy MILO. Tu asistente personal para responder preguntas, redactar contenidos, estudiar nuevos temas o estructurar tus ideas.
+          </p>
+
+          <!-- Ideas Grid -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full pt-2">
+            <button onclick="quickPrompt('Explícame un tema complejo de forma sencilla y con ejemplos cotidianos.')" class="p-3.5 rounded-xl bg-milo-card border border-milo-border hover:border-blue-500/50 text-left text-xs text-slate-300 transition group">
+              📚 <span class="font-semibold text-blue-400 group-hover:underline block mb-0.5">Aprender y Estudiar</span>
+              Explicaciones claras y concisas
+            </button>
+            <button onclick="quickPrompt('Ayúdame a redactar un correo profesional o una carta formal clara y bien estructurada.')" class="p-3.5 rounded-xl bg-milo-card border border-milo-border hover:border-blue-500/50 text-left text-xs text-slate-300 transition group">
+              ✍️ <span class="font-semibold text-purple-400 group-hover:underline block mb-0.5">Redacción & Textos</span>
+              Correos, ensayos e historias
+            </button>
+            <button onclick="quickPrompt('Dame ideas creativas y originales para un proyecto personal o pasatiempo.')" class="p-3.5 rounded-xl bg-milo-card border border-milo-border hover:border-blue-500/50 text-left text-xs text-slate-300 transition group">
+              💡 <span class="font-semibold text-amber-400 group-hover:underline block mb-0.5">Lluvia de Ideas</span>
+              Creatividad e inspiración
+            </button>
+            <button onclick="quickPrompt('Escribe un script en JavaScript o Python para automatizar una tarea sencilla.')" class="p-3.5 rounded-xl bg-milo-card border border-milo-border hover:border-blue-500/50 text-left text-xs text-slate-300 transition group">
+              💻 <span class="font-semibold text-emerald-400 group-hover:underline block mb-0.5">Programación & Código</span>
+              Aprende o depura código
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Attached Image Preview Container -->
+      <div id="attachment-preview-container" class="hidden px-4 py-2 border-t border-milo-border bg-[#0f1523] flex items-center gap-2">
+        <div class="relative group">
+          <img id="attachment-preview-img" src="" class="h-16 w-16 object-cover rounded-lg border border-slate-700" />
+          <button onclick="removeAttachment()" class="absolute -top-2 -right-2 bg-rose-600 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs hover:bg-rose-500 shadow">
+            &times;
+          </button>
+        </div>
+        <span class="text-xs text-slate-400 italic">Imagen lista para analizar (Ej: Ejercicios, diagramas, capturas)</span>
+      </div>
+
+      <!-- INPUT BAR CONTAINER -->
+      <div class="p-3 md:p-4 border-t border-milo-border bg-[#0d121f]">
+        <form id="chat-form" onsubmit="handleSend(event)" class="max-w-4xl mx-auto relative flex items-end gap-2 bg-[#131927] border border-milo-border focus-within:border-blue-500/80 rounded-2xl p-2 transition shadow-lg">
+          
+          <!-- File Attach Button -->
+          <label class="cursor-pointer text-slate-400 hover:text-blue-400 p-2 rounded-xl hover:bg-slate-800/60 transition flex items-center justify-center" title="Adjuntar Imagen o Captura">
+            <i class="fa-solid fa-camera text-lg"></i>
+            <input type="file" id="image-input" accept="image/*" class="hidden" onchange="handleImageSelect(event)">
+          </label>
+
+          <!-- Textarea Input -->
+          <textarea 
+            id="message-input" 
+            rows="1" 
+            placeholder="Pregúntame lo que quieras, pídeme resumir un texto o redactar algo..." 
+            class="flex-1 bg-transparent text-slate-100 placeholder-slate-500 text-sm focus:outline-none resize-none max-h-32 py-2 px-1"
+            onkeydown="handleKeyDown(event)"
+          ></textarea>
+
+          <!-- Submit Button -->
+          <button type="submit" id="send-btn" class="bg-blue-600 hover:bg-blue-500 text-white p-2.5 rounded-xl transition shadow-md shadow-blue-600/30 flex items-center justify-center shrink-0">
+            <i class="fa-solid fa-paper-plane text-sm"></i>
+          </button>
+        </form>
+
+        <div class="text-[11px] text-center text-slate-500 mt-2 flex items-center justify-center gap-1">
+          <span>IA Especializada: <strong class="text-blue-400">Asistente General & Creativo</strong></span>
+          <span>•</span>
+          <span id="status-badge" class="text-amber-400 font-medium">Free Tier (20 Mensajes/día)</span>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- STATUS FOOTER BAR -->
+  <footer class="h-6 bg-[#06080e] border-t border-milo-border px-3 flex items-center justify-between text-[11px] text-slate-500 z-50 shrink-0">
+    <div class="flex items-center gap-3">
+      <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-emerald-500 inline-block"></span> Servidor Conectado</span>
+      <span>|</span>
+      <span>Asistente Inteligente: <strong class="text-blue-400">Activado</strong></span>
+    </div>
+    <div class="flex items-center gap-3">
+      <span id="footer-quota-text" class="text-slate-400">Mensajes hoy: 0 / 20</span>
+    </div>
+  </footer>
+
+  <!-- API KEY MODAL -->
+  <div id="apikey-modal" class="fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 z-50 hidden">
+    <div class="bg-[#131927] border border-slate-700 w-full max-w-md rounded-2xl p-6 space-y-4">
+      <div class="flex items-center justify-between">
+        <h3 class="font-bold text-white text-base flex items-center gap-2">
+          <i class="fa-solid fa-key text-amber-400"></i> Configurar Gemini API Key
+        </h3>
+        <button onclick="closeApiKeyModal()" class="text-slate-400 hover:text-white">&times;</button>
+      </div>
+      <p class="text-xs text-slate-400">
+        Ingresa tu API Key oficial de Google Gemini si deseas usar tu propia cuota directa sin límites.
+      </p>
+      <input type="password" id="api-key-input" placeholder="AIzaSy..." class="w-full bg-[#0d121f] border border-slate-700 rounded-lg p-3 text-sm text-white focus:outline-none focus:border-blue-500 font-mono">
+      <div class="flex justify-end gap-2">
+        <button onclick="closeApiKeyModal()" class="px-4 py-2 rounded-lg text-xs font-semibold text-slate-400 hover:bg-slate-800">Cancelar</button>
+        <button onclick="saveApiKey()" class="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-xs font-semibold">Guardar Key</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- PAYWALL / MONETIZATION MODAL -->
+  <div id="paywall-modal" class="fixed inset-0 bg-black/85 backdrop-blur-md flex items-center justify-center p-4 z-50 hidden">
+    <div class="bg-[#131927] border border-amber-500/30 w-full max-w-2xl rounded-3xl p-6 space-y-6 shadow-2xl relative overflow-hidden">
+      <!-- Glow background decoration -->
+      <div class="absolute -top-16 -right-16 w-48 h-48 bg-amber-500/10 rounded-full blur-3xl pointer-events-none"></div>
+
+      <!-- Header -->
+      <div class="flex items-start justify-between">
+        <div>
+          <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-400 text-xs font-bold mb-2">
+            <i class="fa-solid fa-crown"></i> PASARELA DE PAGOS & PLANES
+          </div>
+          <h2 class="text-2xl font-bold text-white">Desbloquea el Poder Total de MILO</h2>
+          <p class="text-xs text-slate-400 mt-1">
+            Has alcanzado o estás cerca de tu límite gratuito. Elige el plan que mejor se adapte a ti.
+          </p>
+        </div>
+        <button onclick="closePaywallModal()" class="text-slate-400 hover:text-white text-xl">&times;</button>
+      </div>
+
+      <!-- Plans Grid -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <!-- Semanal -->
+        <div onclick="selectPlan('weekly', 10)" id="plan-weekly" class="border border-slate-700 hover:border-amber-500/60 bg-[#0d121f] rounded-2xl p-4 cursor-pointer transition flex flex-col justify-between">
+          <div>
+            <span class="text-xs font-semibold text-slate-400 block">Plan Semanal</span>
+            <div class="text-2xl font-extrabold text-white my-1">$10 <span class="text-xs font-normal text-slate-400">USD</span></div>
+            <p class="text-[11px] text-slate-400">Acceso ilimitado por 7 días. Ideal para proyectos cortos.</p>
+          </div>
+          <div class="mt-4 pt-3 border-t border-slate-800/80 text-[11px] text-slate-300 space-y-1">
+            <div>✓ Mensajes Ilimitados</div>
+            <div>✓ Velocidad Ultra Rápida</div>
+          </div>
+        </div>
+
+        <!-- Mensual (Recomendado) -->
+        <div onclick="selectPlan('monthly', 30)" id="plan-monthly" class="border-2 border-amber-500 bg-[#0d121f] rounded-2xl p-4 cursor-pointer transition flex flex-col justify-between relative shadow-lg shadow-amber-500/10">
+          <span class="absolute -top-3 right-4 bg-amber-500 text-black text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wide">Más Popular</span>
+          <div>
+            <span class="text-xs font-semibold text-amber-400 block">Plan Mensual</span>
+            <div class="text-2xl font-extrabold text-white my-1">$30 <span class="text-xs font-normal text-slate-400">USD</span></div>
+            <p class="text-[11px] text-slate-400">Acceso ilimitado por 30 días. Productividad continua.</p>
+          </div>
+          <div class="mt-4 pt-3 border-t border-slate-800/80 text-[11px] text-slate-300 space-y-1">
+            <div>✓ Mensajes Ilimitados</div>
+            <div>✓ Historial Extenso</div>
+            <div>✓ Prioridad de Servidor</div>
+          </div>
+        </div>
+
+        <!-- Anual -->
+        <div onclick="selectPlan('yearly', 60)" id="plan-yearly" class="border border-slate-700 hover:border-amber-500/60 bg-[#0d121f] rounded-2xl p-4 cursor-pointer transition flex flex-col justify-between">
+          <div>
+            <span class="text-xs font-semibold text-emerald-400 block">Plan Anual</span>
+            <div class="text-2xl font-extrabold text-white my-1">$60 <span class="text-xs font-normal text-slate-400">USD</span></div>
+            <p class="text-[11px] text-slate-400">Ahorra un 50%. Cobertura completa por 365 días.</p>
+          </div>
+          <div class="mt-4 pt-3 border-t border-slate-800/80 text-[11px] text-slate-300 space-y-1">
+            <div>✓ Mensajes Ilimitados</div>
+            <div>✓ Ahorro del 50%</div>
+            <div>✓ Acceso Preferencial</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Payment Methods -->
+      <div class="space-y-3 pt-2">
+        <span class="text-xs font-semibold text-slate-300 block">Selecciona tu Método de Pago:</span>
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
+          <!-- Tarjetas -->
+          <button onclick="processPayment('Tarjeta de Crédito / Débito')" class="p-2.5 rounded-xl border border-slate-700 hover:border-blue-500 bg-[#0d121f] text-xs font-medium text-slate-200 flex flex-col items-center justify-center gap-1 transition">
+            <i class="fa-solid fa-credit-card text-blue-400 text-base"></i>
+            <span>Tarjeta (Visa/MC)</span>
+          </button>
+          <!-- PayPal -->
+          <button onclick="processPayment('PayPal')" class="p-2.5 rounded-xl border border-slate-700 hover:border-blue-400 bg-[#0d121f] text-xs font-medium text-slate-200 flex flex-col items-center justify-center gap-1 transition">
+            <i class="fa-brands fa-paypal text-sky-400 text-base"></i>
+            <span>PayPal</span>
+          </button>
+          <!-- Pasarelas Locales -->
+          <button onclick="processPayment('Pasarelas Locales / MercadoPago')" class="p-2.5 rounded-xl border border-slate-700 hover:border-emerald-500 bg-[#0d121f] text-xs font-medium text-slate-200 flex flex-col items-center justify-center gap-1 transition">
+            <i class="fa-solid fa-money-bill-transfer text-emerald-400 text-base"></i>
+            <span>Pago Local / PSE</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Simulated Confirmation Banner -->
+      <div id="payment-notification" class="hidden p-3 rounded-xl bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 text-xs text-center font-medium">
+        ¡Suscripción simulada con éxito! Tu cuota ahora es ilimitada.
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== LOGIC & SCRIPTING ==================== -->
+  <script>
+    // SYSTEM CONSTANTS
+    const DAILY_LIMIT = 20;
+    const SYSTEM_PROMPT = `Eres MILO, un asistente virtual versátil, amigable, claro y altamente eficiente.
+    Tu objetivo principal es ayudar al usuario con cualquier consulta diaria, estudio, redacción, programación, resolución de dudas o tareas creativas.
+    
+    Reglas de respuesta:
+    1. Sé claro, servicial, empático y estructurado (utiliza viñetas, bloques de código formateados y negritas para mejorar la lectura).
+    2. Adáptate al tono que pida el usuario: formal, explicativo, creativo o técnico según la tarea.
+    3. Si el usuario te hace preguntas técnicas o de programación, proporciona código limpio, explicado y fácil de implementar.
+    4. Proporciona explicaciones didácticas paso a paso cuando te pidan ayuda con temas de estudio o aprendizaje.`;
+
+    let apiKey = localStorage.getItem('milo_gemini_key') || '';
+    let chats = JSON.parse(localStorage.getItem('milo_chats') || '[]');
+    let currentChatId = null;
+    let selectedImageBase64 = null;
+    let selectedPlan = 'monthly';
+    let isPremium = localStorage.getItem('milo_is_premium') === 'true';
+
+    // INITIALIZATION
+    window.onload = function() {
+      checkDailyReset();
+      updateQuotaUI();
+      renderHistoryList();
+      if (chats.length === 0) {
+        createNewChat();
+      } else {
+        selectChat(chats[0].id);
+      }
+    };
+
+    // QUOTA & MONETIZATION LOGIC
+    function checkDailyReset() {
+      const today = new Date().toISOString().split('T')[0];
+      const lastDate = localStorage.getItem('milo_last_date');
+      if (lastDate !== today) {
+        localStorage.setItem('milo_last_date', today);
+        localStorage.setItem('milo_daily_count', '0');
+      }
+    }
+
+    function getDailyCount() {
+      checkDailyReset();
+      return parseInt(localStorage.getItem('milo_daily_count') || '0', 10);
+    }
+
+    function incrementDailyCount() {
+      if (isPremium) return;
+      const current = getDailyCount();
+      localStorage.setItem('milo_daily_count', (current + 1).toString());
+      updateQuotaUI();
+    }
+
+    function updateQuotaUI() {
+      const count = getDailyCount();
+      const quotaCounter = document.getElementById('quota-counter');
+      const progressBar = document.getElementById('quota-progress-bar');
+      const footerQuota = document.getElementById('footer-quota-text');
+      const statusBadge = document.getElementById('status-badge');
+
+      if (isPremium) {
+        quotaCounter.innerText = 'Ilimitado ✨';
+        progressBar.style.width = '100%';
+        progressBar.className = 'bg-amber-500 h-full w-full';
+        footerQuota.innerText = 'Modo Premium: Consultas Ilimitadas';
+        statusBadge.innerText = 'Premium (Ilimitado)';
+        statusBadge.className = 'text-amber-400 font-bold';
+      } else {
+        quotaCounter.innerText = `${count} / ${DAILY_LIMIT}`;
+        const pct = Math.min((count / DAILY_LIMIT) * 100, 100);
+        progressBar.style.width = `${pct}%`;
+        progressBar.className = pct >= 100 ? 'bg-rose-500 h-full transition-all' : 'bg-blue-500 h-full transition-all';
+        footerQuota.innerText = `Mensajes hoy: ${count} / ${DAILY_LIMIT}`;
+        statusBadge.innerText = `Free Tier (${DAILY_LIMIT - count} restantes)`;
+      }
+    }
+
+    function openPaywallModal() {
+      document.getElementById('paywall-modal').classList.remove('hidden');
+    }
+
+    function closePaywallModal() {
+      document.getElementById('paywall-modal').classList.add('hidden');
+    }
+
+    function selectPlan(plan, price) {
+      selectedPlan = plan;
+      ['weekly', 'monthly', 'yearly'].forEach(p => {
+        const el = document.getElementById(`plan-${p}`);
+        if (p === plan) {
+          el.classList.add('border-amber-500', 'border-2');
+          el.classList.remove('border-slate-700');
+        } else {
+          el.classList.remove('border-amber-500', 'border-2');
+          el.classList.add('border-slate-700');
+        }
+      });
+    }
+
+    function processPayment(method) {
+      const notif = document.getElementById('payment-notification');
+      notif.classList.remove('hidden');
+      notif.innerText = `Procesando pago vía ${method}... Redirigiendo a pasarela segura.`;
+
+      setTimeout(() => {
+        isPremium = true;
+        localStorage.setItem('milo_is_premium', 'true');
+        updateQuotaUI();
+        notif.innerText = `¡Suscripción activada con éxito vía ${method}! Disfruta de MILO Premium.`;
+        setTimeout(() => {
+          closePaywallModal();
+          notif.classList.add('hidden');
+        }, 1500);
+      }, 1000);
+    }
+
+    // CHAT MANAGEMENT
+    function createNewChat() {
+      const newChat = {
+        id: 'chat_' + Date.now(),
+        title: 'Nueva Conversación',
+        messages: []
+      };
+      chats.unshift(newChat);
+      saveChats();
+      renderHistoryList();
+      selectChat(newChat.id);
+    }
+
+    function saveChats() {
+      localStorage.setItem('milo_chats', JSON.stringify(chats));
+    }
+
+    function renderHistoryList() {
+      const container = document.getElementById('chat-history-list');
+      container.innerHTML = '';
+
+      chats.forEach(chat => {
+        const btn = document.createElement('button');
+        btn.onclick = () => selectChat(chat.id);
+        const isActive = chat.id === currentChatId;
+
+        btn.className = `w-full text-left p-2.5 rounded-xl text-xs font-medium transition flex items-center justify-between group ${
+          isActive 
+            ? 'bg-blue-600/20 text-blue-300 border border-blue-500/30' 
+            : 'text-slate-400 hover:bg-slate-800/60 hover:text-slate-200'
+        }`;
+
+        btn.innerHTML = `
+          <div class="flex items-center gap-2 truncate">
+            <i class="fa-regular fa-comments text-xs ${isActive ? 'text-blue-400' : 'text-slate-500'}"></i>
+            <span class="truncate">${chat.title}</span>
+          </div>
+        `;
+        container.appendChild(btn);
+      });
+    }
+
+    function selectChat(id) {
+      currentChatId = id;
+      renderHistoryList();
+      const chat = chats.find(c => c.id === id);
+      const titleEl = document.getElementById('current-chat-title');
+      const messagesContainer = document.getElementById('messages-container');
+
+      if (!chat) return;
+      titleEl.innerText = chat.title;
+
+      if (chat.messages.length === 0) {
+        messagesContainer.innerHTML = `
+          <div id="welcome-screen" class="h-full flex flex-col items-center justify-center text-center max-w-xl mx-auto p-6 space-y-4">
+            <div class="w-16 h-16 rounded-2xl bg-gradient-to-tr from-blue-500 to-indigo-600 flex items-center justify-center text-3xl shadow-xl shadow-blue-500/20">
+              🤖
+            </div>
+            <h2 class="text-2xl font-bold text-white">¿En qué te puedo ayudar hoy?</h2>
+            <p class="text-slate-400 text-sm">
+              Soy MILO. Tu asistente personal para responder preguntas, redactar contenidos, estudiar nuevos temas o estructurar tus ideas.
+            </p>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full pt-2">
+              <button onclick="quickPrompt('Explícame un tema complejo de forma sencilla y con ejemplos cotidianos.')" class="p-3.5 rounded-xl bg-milo-card border border-milo-border hover:border-blue-500/50 text-left text-xs text-slate-300 transition group">
+                📚 <span class="font-semibold text-blue-400 group-hover:underline block mb-0.5">Aprender y Estudiar</span>
+                Explicaciones claras y concisas
+              </button>
+              <button onclick="quickPrompt('Ayúdame a redactar un correo profesional o una carta formal clara y bien estructurada.')" class="p-3.5 rounded-xl bg-milo-card border border-milo-border hover:border-blue-500/50 text-left text-xs text-slate-300 transition group">
+                ✍️ <span class="font-semibold text-purple-400 group-hover:underline block mb-0.5">Redacción & Textos</span>
+                Correos, ensayos e historias
+              </button>
+              <button onclick="quickPrompt('Dame ideas creativas y originales para un proyecto personal o pasatiempo.')" class="p-3.5 rounded-xl bg-milo-card border border-milo-border hover:border-blue-500/50 text-left text-xs text-slate-300 transition group">
+                💡 <span class="font-semibold text-amber-400 group-hover:underline block mb-0.5">Lluvia de Ideas</span>
+                Creatividad e inspiración
+              </button>
+              <button onclick="quickPrompt('Escribe un script en JavaScript o Python para automatizar una tarea sencilla.')" class="p-3.5 rounded-xl bg-milo-card border border-milo-border hover:border-blue-500/50 text-left text-xs text-slate-300 transition group">
+                💻 <span class="font-semibold text-emerald-400 group-hover:underline block mb-0.5">Programación & Código</span>
+                Aprende o depura código
+              </button>
+            </div>
+          </div>
+        `;
+      } else {
+        messagesContainer.innerHTML = '';
+        chat.messages.forEach(msg => appendMessageToDOM(msg.role, msg.content, msg.image));
+        scrollToBottom();
+      }
+    }
+
+    function clearCurrentChat() {
+      const chat = chats.find(c => c.id === currentChatId);
+      if (chat) {
+        chat.messages = [];
+        chat.title = 'Nueva Conversación';
+        saveChats();
+        selectChat(currentChatId);
+      }
+    }
+
+    function quickPrompt(text) {
+      document.getElementById('message-input').value = text;
+      handleSend(new Event('submit'));
+    }
+
+    // IMAGE HANDLER
+    function handleImageSelect(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        selectedImageBase64 = e.target.result;
+        document.getElementById('attachment-preview-img').src = selectedImageBase64;
+        document.getElementById('attachment-preview-container').classList.remove('hidden');
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function removeAttachment() {
+      selectedImageBase64 = null;
+      document.getElementById('image-input').value = '';
+      document.getElementById('attachment-preview-container').classList.add('hidden');
+    }
+
+    // MESSAGE DOM RENDERING
+    function appendMessageToDOM(role, content, image = null) {
+      const welcome = document.getElementById('welcome-screen');
+      if (welcome) welcome.remove();
+
+      const messagesContainer = document.getElementById('messages-container');
+      const isUser = role === 'user';
+
+      const wrapper = document.createElement('div');
+      wrapper.className = `flex ${isUser ? 'justify-end' : 'justify-start'} mb-4`;
+
+      const bubble = document.createElement('div');
+      bubble.className = `max-w-[85%] sm:max-w-[75%] rounded-2xl p-4 text-sm ${
+        isUser 
+          ? 'bg-blue-600 text-white rounded-br-none shadow-md shadow-blue-600/20' 
+          : 'bg-milo-card border border-milo-border text-slate-100 rounded-bl-none shadow-lg'
+      }`;
+
+      let imageHTML = '';
+      if (image) {
+        imageHTML = `<img src="${image}" class="max-h-48 rounded-lg mb-2 object-cover border border-slate-700"/>`;
+      }
+
+      const formattedContent = isUser ? content : marked.parse(content);
+
+      bubble.innerHTML = `
+        ${imageHTML}
+        <div class="${isUser ? '' : 'markdown-content'}">${formattedContent}</div>
+      `;
+
+      wrapper.appendChild(bubble);
+      messagesContainer.appendChild(wrapper);
+      scrollToBottom();
+      return bubble;
+    }
+
+    function scrollToBottom() {
+      const container = document.getElementById('messages-container');
+      container.scrollTop = container.scrollHeight;
+    }
+
+    // SEND & SSE STREAMING HANDLER
+    async function handleSend(e) {
+      if (e) e.preventDefault();
+
+      // Check Daily Quota
+      if (!isPremium && getDailyCount() >= DAILY_LIMIT) {
+        openPaywallModal();
+        return;
+      }
+
+      const input = document.getElementById('message-input');
+      const text = input.value.trim();
+      if (!text && !selectedImageBase64) return;
+
+      const currentChat = chats.find(c => c.id === currentChatId);
+      if (!currentChat) return;
+
+      // Increment Usage Counter
+      incrementDailyCount();
+
+      // Update Title if First Message
+      if (currentChat.messages.length === 0) {
+        currentChat.title = text.slice(0, 30) || 'Conversación General';
+        saveChats();
+        renderHistoryList();
+      }
+
+      // Record User Message
+      const userMessage = { role: 'user', content: text, image: selectedImageBase64 };
+      currentChat.messages.push(userMessage);
+      appendMessageToDOM('user', text, selectedImageBase64);
+
+      // Reset Inputs
+      input.value = '';
+      const imageToSend = selectedImageBase64;
+      removeAttachment();
+
+      // Create Bot Bubble for Streaming
+      const botBubbleWrapper = appendMessageToDOM('model', '<i>MILO está pensando la respuesta...</i>');
+      const markdownContainer = botBubbleWrapper.querySelector('.markdown-content');
+
+      let accumulatedText = "";
+
+      try {
+        // Build API Payload
+        const contentsPayload = currentChat.messages.map(msg => {
+          const parts = [];
+          if (msg.image) {
+            const base64Data = msg.image.split(',')[1];
+            const mimeType = msg.image.split(';')[0].split(':')[1];
+            parts.push({
+              inline_data: {
+                mime_type: mimeType,
+                data: base64Data
+              }
+            });
+          }
+          if (msg.content) {
+            parts.push({ text: msg.content });
+          }
+          return {
+            role: msg.role === 'user' ? 'user' : 'model',
+            parts: parts
+          };
+        });
+
+        // Call Gemini API with Streaming (SSE style)
+        const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-lite:streamGenerateContent?alt=sse&key=${apiKey}`;
+
+        const response = await fetch(endpoint, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            systemInstruction: { parts: [{ text: SYSTEM_PROMPT }] },
+            contents: contentsPayload
+          })
+        });
+
+        if (!response.ok) {
+          throw new Error(`Error de conexión HTTP (${response.status}). Verifica tu API Key o conexión.`);
+        }
+
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder('utf-8');
+        markdownContainer.innerHTML = '';
+
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+
+          const chunk = decoder.decode(value, { stream: true });
+          const lines = chunk.split('\n');
+
+          for (let line of lines) {
+            if (line.startsWith('data: ')) {
+              try {
+                const dataObj = JSON.parse(line.replace('data: ', ''));
+                if (dataObj.candidates && dataObj.candidates[0].content.parts) {
+                  const newText = dataObj.candidates[0].content.parts.map(p => p.text).join('');
+                  accumulatedText += newText;
+                  markdownContainer.innerHTML = marked.parse(accumulatedText);
+                  scrollToBottom();
+                }
+              } catch (err) {
+                // Ignore SSE parsing heartbeat lines
+              }
+            }
+          }
+        }
+
+        // Final Save Model Message
+        currentChat.messages.push({ role: 'model', content: accumulatedText });
+        saveChats();
+
+      } catch (err) {
+        markdownContainer.innerHTML = `<span class="text-rose-400 font-medium"><i class="fa-solid fa-triangle-exclamation mr-1"></i> Error: ${err.message}</span>`;
+      }
+    }
+
+    function handleKeyDown(e) {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        handleSend();
+      }
+    }
+
+    // API KEY MODAL LOGIC
+    function saveApiKeyModal() {
+      document.getElementById('api-key-input').value = apiKey;
+      document.getElementById('apikey-modal').classList.remove('hidden');
+    }
+
+    function closeApiKeyModal() {
+      document.getElementById('apikey-modal').classList.add('hidden');
+    }
+
+    function saveApiKey() {
+      const key = document.getElementById('api-key-input').value.trim();
+      apiKey = key;
+      localStorage.setItem('milo_gemini_key', key);
+      closeApiKeyModal();
+    }
+
+    function toggleSidebar() {
+      const sidebar = document.getElementById('sidebar');
+      sidebar.classList.toggle('-translate-x-full');
+    }
+  </script>
+</body>
+</html>
